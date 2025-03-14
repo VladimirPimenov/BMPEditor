@@ -33,16 +33,19 @@ private:
 	QGraphicsScene * scene;
 	
 	int axisOffset;
-	int maxFrequencyValue;
-	double Yscale = 1;
+	int maxPixelCount;
+	double Yscale;
 
-	void paintAxis();
+	void paintX();
+	void paintY();
+	void paintColumns(std::map<int, int> & coordsValues, QPen pen);
 
 	QColor getChannelColor();
-	void getChannelValues(std::map<int, int> & valuesStorage, QColor color);
+	void loadChannelValues(std::map<int, int> & valuesStorage, QColor color);
 	
 	bool checkGrayScale();
 	
+	void createHistogramScene();
 	void createChannelSelector();
 };
 

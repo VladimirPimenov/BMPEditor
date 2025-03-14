@@ -1,20 +1,5 @@
 #include "histogramPanel.h"
 
-int findMaxPixelCount(std::map<int, int> map)
-{
-    int max = 0;
-    
-    for (auto it = map.begin(); it != map.end(); it++)
-	{
-		if(it->second > max)
-		{
-		    max = it->second;
-		}
-	}
-    
-    return max;
-}
-
 int findScale(int max)
 {
 	int scale = 1;
@@ -30,19 +15,25 @@ int findScale(int max)
 HistogramPanel::HistogramPanel() : QWidget()
 {
 	this->setFixedWidth(310);
-	axisOffset = 5;
+	axisOffset = 50;
+	Yscale = 1;
 
-	panel = new QVBoxLayout(this);
-
+	createHistogramScene();
 	createChannelSelector();
-
-	scene = new QGraphicsScene();
-	histogram = new QGraphicsView();
-	histogram->setScene(scene);
-	histogram->setFixedSize(300, 160);
-	panel->addWidget(histogram);
 }
 
+void HistogramPanel::createHistogramScene()
+{
+	panel = new QVBoxLayout(this);
+	scene = new QGraphicsScene();
+	histogram = new QGraphicsView();
+	
+	histogram->setScene(scene);
+	histogram->setFixedSize(300, 160);
+	
+	panel->addWidget(histogram);
+    
+}
 void HistogramPanel::createChannelSelector()
 {
     channelSelector = new QComboBox();
@@ -55,18 +46,18 @@ void HistogramPanel::createChannelSelector()
 	panel->addWidget(channelSelector);
 }
 
-void HistogramPanel::paintAxis()
+void HistogramPanel::paintX()
 {
-	QPen coordsPen(Qt::black);
-	QBrush brush(Qt::black);
+	QPen pen = Qt::black;
+	QBrush brush = Qt::black;
+	
+    scene->addRect(axisOffset, 0, 260, 1, pen, brush);
 
-	scene->addRect(axisOffset, 0, 260, 1, coordsPen, brush);
-
-	scene->addRect(axisOffset + 51, 0, 1, -5, coordsPen, brush);
-	scene->addRect(axisOffset + 102, 0, 1, -5, coordsPen, brush);
-	scene->addRect(axisOffset + 153, 0, 1, -5, coordsPen, brush);
-	scene->addRect(axisOffset + 204, 0, 1, -5, coordsPen, brush);
-	scene->addRect(axisOffset + 255, 0, 1, -5, coordsPen, brush);
+	scene->addRect(axisOffset + 51, 0, 1, -5, pen, brush);
+	scene->addRect(axisOffset + 102, 0, 1, -5, pen, brush);
+	scene->addRect(axisOffset + 153, 0, 1, -5, pen, brush);
+	scene->addRect(axisOffset + 204, 0, 1, -5, pen, brush);
+	scene->addRect(axisOffset + 255, 0, 1, -5, pen, brush);
 
 	QGraphicsTextItem * x0 = scene->addText("0");
 	QGraphicsTextItem * x51 = scene->addText("51");
@@ -74,15 +65,39 @@ void HistogramPanel::paintAxis()
 	QGraphicsTextItem * x153 = scene->addText("153");
 	QGraphicsTextItem * x204 = scene->addText("204");
 	QGraphicsTextItem * x255 = scene->addText("255");
-
+	
 	x0->setPos(axisOffset + 0,0);
 	x51->setPos(axisOffset + 51 - 10,0);
 	x102->setPos(axisOffset + 102 - 10,0);
 	x153->setPos(axisOffset + 153 - 10,0);
 	x204->setPos(axisOffset + 204 - 10,0);
 	x255->setPos(axisOffset + 255 - 10,0);
-	
 }
+void HistogramPanel::paintY()
+{
+	int scaledMaxY = -maxPixelCount/Yscale;
+	
+	QPen pen = Qt::black;
+	QBrush brush = Qt::black;
+
+	scene->addRect(axisOffset, 0, 1, scaledMaxY, pen, brush);
+	
+	scene->addRect(axisOffset, scaledMaxY, 5, 1, pen, brush);
+	scene->addRect(axisOffset, scaledMaxY * 3 / 5, 5, 1, pen, brush);
+	scene->addRect(axisOffset, scaledMaxY / 5, 5, 1, pen, brush);
+}
+void HistogramPanel::paintColumns(std::map<int, int> & coordsValues, QPen pen)
+{
+	int x, y;
+    for (auto it = coordsValues.begin(); it != coordsValues.end(); it++)
+		{
+			x = it->first;
+			y = it->second;
+			
+			scene->addLine(axisOffset + x, 0, axisOffset + x, -y/Yscale, pen);
+		}
+}
+
 void HistogramPanel::paintHistogram()
 {
 	if (spectatedImage != nullptr)
@@ -107,28 +122,32 @@ void HistogramPanel::paintHistogram()
 		}
 
 		std::map<int, int> coordsValues;
-		getChannelValues(coordsValues, paintColor);
+		loadChannelValues(coordsValues, paintColor);
+		
+		Yscale = findScale(maxPixelCount);
+		
+		paintX();
+		paintY();
+		paintColumns(coordsValues, pen);
+	}
+}
 
-		int x;
-		int y;
-		
-		int maxPixelCount = findMaxPixelCount(coordsValues);
-		int yScale = findScale(maxPixelCount);
-		
-		for (auto it = coordsValues.begin(); it != coordsValues.end(); it++)
-		{
-			x = it->first;
-			y = it->second;
-			
-			if(x > 0)
-			{
-				scene->addLine(axisOffset + x, 0, axisOffset + x, -y/yScale, pen);
-			}
-		}
+void HistogramPanel::clearHistogram()
+{
+	scene->clear();
+	
+	channelSelector->setEnabled(false);
+}
 
-		paintAxis();
-		
-		scene->addRect(axisOffset, 0, 1, -maxPixelCount/yScale, QPen(Qt::black), QBrush(Qt::black));
+bool HistogramPanel::checkGrayScale()
+{
+    if(spectatedImage->isGrayscale())
+    {
+        return true;
+    }
+	else
+	{
+	    return false;
 	}
 }
 
@@ -148,18 +167,11 @@ QColor HistogramPanel::getChannelColor()
 	}
 }
 
-void HistogramPanel::clearHistogram()
-{
-	scene->clear();
-	
-	channelSelector->setEnabled(false);
-}
-
-void HistogramPanel::getChannelValues(std::map<int, int> &valuesStorage, QColor color)
+void HistogramPanel::loadChannelValues(std::map<int, int> &valuesStorage, QColor color)
 {
 	QRgb pixel;
 	int colorValue;
-	maxFrequencyValue = 0;
+	maxPixelCount = 0;
 
 	for (int x = 0; x < spectatedImage->width(); x++)
 	{
@@ -188,9 +200,9 @@ void HistogramPanel::getChannelValues(std::map<int, int> &valuesStorage, QColor 
 			{
 				valuesStorage[colorValue]++;
 				
-				if(valuesStorage[colorValue] > maxFrequencyValue)
+				if(valuesStorage[colorValue] > maxPixelCount)
 				{
-				    maxFrequencyValue = valuesStorage[colorValue];
+				    maxPixelCount = valuesStorage[colorValue];
 				}
 			}
 			else
@@ -198,17 +210,5 @@ void HistogramPanel::getChannelValues(std::map<int, int> &valuesStorage, QColor 
 				valuesStorage[colorValue] = 1;
 			}
 		}
-	}
-}
-
-bool HistogramPanel::checkGrayScale()
-{
-    if(spectatedImage->isGrayscale())
-    {
-        return true;
-    }
-	else
-	{
-	    return false;
 	}
 }
