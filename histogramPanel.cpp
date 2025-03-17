@@ -11,25 +11,37 @@ int findScale(int max)
     }
     return scale;
 }
+std::string getExponencialView(double num)
+{
+    int tenMultiplier = 0;
+    
+    while(num >= 10)
+    {
+        num /= 10;
+        tenMultiplier++;
+    }
+    return std::to_string(num).substr(0,3) + "E" + std::to_string(tenMultiplier);
+}
 
 HistogramPanel::HistogramPanel() : QWidget()
 {
-	this->setFixedWidth(310);
+	this->setFixedWidth(345);
 	axisOffset = 50;
 	Yscale = 1;
 
-	createHistogramScene();
+	panel = new QVBoxLayout(this);
+
 	createChannelSelector();
+	createHistogramScene();
 }
 
 void HistogramPanel::createHistogramScene()
 {
-	panel = new QVBoxLayout(this);
 	scene = new QGraphicsScene();
 	histogram = new QGraphicsView();
 	
 	histogram->setScene(scene);
-	histogram->setFixedSize(300, 160);
+	histogram->setFixedSize(330, 160);
 	
 	panel->addWidget(histogram);
     
@@ -83,8 +95,13 @@ void HistogramPanel::paintY()
 	scene->addRect(axisOffset, 0, 1, scaledMaxY, pen, brush);
 	
 	scene->addRect(axisOffset, scaledMaxY, 5, 1, pen, brush);
-	scene->addRect(axisOffset, scaledMaxY * 3 / 5, 5, 1, pen, brush);
-	scene->addRect(axisOffset, scaledMaxY / 5, 5, 1, pen, brush);
+	scene->addRect(axisOffset, scaledMaxY / 2, 5, 1, pen, brush);
+	
+	QGraphicsItem * yMax = scene->addText(QString::fromStdString(getExponencialView(maxPixelCount)));
+	QGraphicsItem * yMaxHalf = scene->addText(QString::fromStdString(getExponencialView(maxPixelCount / 2)));
+	
+	yMax->setPos(0, scaledMaxY - 6);
+	yMaxHalf->setPos(0, scaledMaxY / 2 - 6);
 }
 void HistogramPanel::paintColumns(std::map<int, int> & coordsValues, QPen pen)
 {

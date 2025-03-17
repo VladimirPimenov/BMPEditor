@@ -11,7 +11,8 @@
 #include <QPushButton>
 
 #include <map>
-#include <iostream>
+#include <string>
+#include <cmath>
 
 class HistogramPanel: public QWidget
 {
