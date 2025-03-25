@@ -1,4 +1,5 @@
 #include "histogramPanel.h"
+#include <iostream>
 
 int findScale(int max)
 {
@@ -32,19 +33,22 @@ HistogramPanel::HistogramPanel() : QWidget()
 	panel = new QVBoxLayout(this);
 
 	createChannelSelector();
-	createHistogramScene();
+	createHistogramPanel();
 }
 
-void HistogramPanel::createHistogramScene()
+void HistogramPanel::createHistogramPanel()
 {
-	scene = new QGraphicsScene();
 	histogram = new QGraphicsView();
-	
-	histogram->setScene(scene);
 	histogram->setFixedSize(330, 160);
 	
 	panel->addWidget(histogram);
     
+}
+void HistogramPanel::reloadHistogramScene()
+{
+	scene = new QGraphicsScene();
+	
+	histogram->setScene(scene);
 }
 void HistogramPanel::createChannelSelector()
 {
@@ -122,7 +126,8 @@ void HistogramPanel::paintHistogram()
 		QColor paintColor;
 		QPen pen;
 
-		this->clearHistogram();
+		clearHistogram();
+		reloadHistogramScene();
 
 		if(!checkGrayScale())
 		{
@@ -151,8 +156,11 @@ void HistogramPanel::paintHistogram()
 
 void HistogramPanel::clearHistogram()
 {
-	scene->clear();
-	
+	if(scene != nullptr)
+	{
+		delete scene;
+		scene = nullptr;
+	}
 	channelSelector->setEnabled(false);
 }
 
@@ -217,10 +225,7 @@ void HistogramPanel::loadChannelValues(std::map<int, int> &valuesStorage, QColor
 			{
 				valuesStorage[colorValue]++;
 				
-				if(valuesStorage[colorValue] > maxPixelCount)
-				{
-				    maxPixelCount = valuesStorage[colorValue];
-				}
+				maxPixelCount = std::max(maxPixelCount, valuesStorage[colorValue]);
 			}
 			else
 			{

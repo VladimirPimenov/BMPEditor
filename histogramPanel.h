@@ -31,7 +31,7 @@ private:
 	QVBoxLayout * panel;
 
 	QGraphicsView * histogram;
-	QGraphicsScene * scene;
+	QGraphicsScene * scene = nullptr;
 	
 	int axisOffset;
 	int maxPixelCount;
@@ -46,7 +46,8 @@ private:
 	
 	bool checkGrayScale();
 	
-	void createHistogramScene();
+	void createHistogramPanel();
+	void reloadHistogramScene();
 	void createChannelSelector();
 };
 
