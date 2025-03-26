@@ -1,4 +1,4 @@
-#include "histogramPanel.h"
+#include "../include/histogramPanel.h"
 #include <iostream>
 
 int findScale(int max)
