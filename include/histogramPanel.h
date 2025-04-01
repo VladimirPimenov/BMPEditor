@@ -35,7 +35,7 @@ private:
 	
 	int axisOffset;
 	int maxPixelCount;
-	double Yscale;
+	float Yscale;
 
 	void paintX();
 	void paintY();
