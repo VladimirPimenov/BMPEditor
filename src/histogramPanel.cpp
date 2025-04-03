@@ -111,12 +111,13 @@ void HistogramPanel::paintColumns(std::map<int, int> & coordsValues, QPen pen)
 {
 	int x, y;
     for (auto it = coordsValues.begin(); it != coordsValues.end(); it++)
-		{
-			x = it->first;
-			y = it->second;
-			
+	{
+		x = it->first;
+		y = it->second;
+		
+		if(x != 0)
 			scene->addLine(axisOffset + x, 0, axisOffset + x, -y/Yscale, pen);
-		}
+	}
 }
 
 void HistogramPanel::paintHistogram()
